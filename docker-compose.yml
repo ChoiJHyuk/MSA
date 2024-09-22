@@ -1,0 +1,59 @@
+version: '2'
+
+services:
+  currency-exchange:
+    image: choijhyuk/currency-exchange
+    ports:
+      - "8000:8000"
+    networks:
+      - currency-network
+    environment:
+      - eureka.client.serviceUrl.defaultZone=http://naming-server:8761/eureka
+      - management.zipkin.tracing.endpoint=http://zipkin-server:9411/api/v2/spans
+    depends_on:
+      - naming-server
+      - zipkin-server
+
+  currency-conversion:
+    image: choijhyuk/currency-conversion
+    ports:
+      - "8100:8100"
+    networks:
+      - currency-network
+    environment:
+      - eureka.client.serviceUrl.defaultZone=http://naming-server:8761/eureka
+      - management.zipkin.tracing.endpoint=http://zipkin-server:9411/api/v2/spans
+    depends_on:
+      - naming-server
+      - zipkin-server
+
+  naming-server:
+    image: choijhyuk/naming-server
+    ports:
+      - "8761:8761"
+    networks:
+      - currency-network
+        
+  api-gateway:
+    image: choijhyuk/api-gateway
+    ports:
+      - "8765:8765"
+    networks:
+      - currency-network
+    depends_on:
+      - naming-server
+      - zipkin-server
+    environment:
+      - eureka.client.serviceUrl.defaultZone=http://naming-server:8761/eureka
+      - management.zipkin.tracing.endpoint=http://zipkin-server:9411/api/v2/spans
+
+
+  zipkin-server:
+    image: openzipkin/zipkin
+    ports:
+      - "9411:9411"
+    networks:
+      - currency-network
+
+networks:
+  currency-network:
